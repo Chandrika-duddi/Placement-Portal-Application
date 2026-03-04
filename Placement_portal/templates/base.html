@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            padding: 1px;
+        }
+    </style>
+</head>
+<body>
+    <nav style="background-color: #e0c671; padding: 10px;">
+        <a href="http://127.0.0.1:5000/" style="color: rgb(99, 51, 0); margin-right: 20px;">Login</a>
+        <a href="http://127.0.0.1:5000/admin/dashboard" style="color: rgb(99, 51, 0); margin-right: 20px;">Admin</a>
+        <a href="http://127.0.0.1:5000/student/dashboard" style="color: rgb(99, 51, 0); margin-right: 20px;">Student</a>
+        <a href="http://127.0.0.1:5000/company/dashboard" style="color: rgb(99, 51, 0);">Company</a>
+    </nav>
+    
+    <div style="margin-top: 20px;">
+        {% block content %}{% endblock %}
+    </div> 
+</body>
+</html>
