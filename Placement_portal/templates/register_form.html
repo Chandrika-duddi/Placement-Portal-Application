@@ -1,0 +1,15 @@
+{%- extends 'base.html' -%}
+{% block content %} 
+<h1>Register for Placement Portal</h1>
+<form>
+    <input type="email" placeholder="Email" required><br><br>
+    <input type="password" placeholder="Password" required><br><br>
+    <select name="role" required>
+        <option value="Admin">Admin</option>
+        <option value="student">Student</option>
+        <option value="company">Company</option>
+    </select><br><br>
+    <button type="submit">Register</button>
+    <p><a href="http://127.0.0.1:5000/login">Already have an account? Login here</a></p>
+</form> 
+{% endblock %}

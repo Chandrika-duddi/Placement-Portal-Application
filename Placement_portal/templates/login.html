@@ -1,9 +1,19 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Login</h1>
-<form>
+<h1>Login to Portal</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>
+      {% for message in messages %}
+        <li style="color: red;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+<form method="post">   
     <input type="email" placeholder="Email" required><br><br>
     <input type="password" placeholder="Password" required><br><br>
     <button type="submit">Login</button>
 </form>
+<p><a href="http://127.0.0.1:5000/register">Don't have an account? Register here</a></p>
 {% endblock %}
