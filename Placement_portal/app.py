@@ -1,11 +1,13 @@
 import hashlib
 
-from flask import Flask, app, render_template, request, redirect, url_for,session,flash
+from flask import Flask, render_template, request, redirect, url_for,session,flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///placement.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -28,6 +30,8 @@ class placementDrive(db.Model):
     description = db.Column(db.Text, nullable=False)
     eligibility_criteria = db.Column(db.Text, nullable=False)
     application_deadline = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(50), default='Pending')
+    company_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +39,20 @@ class Application(db.Model):
     drive_id = db.Column(db.Integer, db.ForeignKey('placement_drive.id'), nullable=False)
     status = db.Column(db.String(50), default='Applied')
     applied_on = db.Column(db.DateTime, default=datetime.utcnow)    
+
+class companyProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    hr = db.Column(db.String(100), nullable=True)
+    website = db.Column(db.String(255), nullable=True)
+
+class studentProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    roll_number = db.Column(db.String(20), nullable=True)
+    department = db.Column(db.String(50), nullable=True)
+    year_of_study = db.Column(db.Integer, nullable=True)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -89,6 +107,7 @@ def logout():
     session.clear()
     flash('Logged out successfully!')
     return redirect(url_for('login'))
+
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if session.get('role') != 'admin':
