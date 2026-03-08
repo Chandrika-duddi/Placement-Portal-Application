@@ -24,6 +24,7 @@ class User(db.Model, UserMixin):
     is_active = db.Column(db.Boolean, default=True)
 
 class placementDrive(db.Model):
+    __tablename__ = 'placementDrive'
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(100), nullable=False)
     job_role = db.Column(db.String(100), nullable=False)
@@ -36,9 +37,10 @@ class placementDrive(db.Model):
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    drive_id = db.Column(db.Integer, db.ForeignKey('placement_drive.id'), nullable=False)
+    drive_id = db.Column(db.Integer, db.ForeignKey('placementDrive.id'), nullable=False)
     status = db.Column(db.String(50), default='Applied')
     applied_on = db.Column(db.DateTime, default=datetime.utcnow)    
+
 
 class companyProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -109,8 +111,9 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/admin/dashboard')
+@login_required
 def admin_dashboard():
-    if session.get('role') != 'admin':
+    if current_user.role != 'admin':
         return redirect(url_for('login'))
 
     stats={'students': User.query.filter_by(role='student').count(),
@@ -123,7 +126,7 @@ def admin_dashboard():
 
 @app.route('/admin/approve_user/<int:user_id>')
 def approve_user(user_id):
-    if session.get('role') != 'admin':
+    if current_user.role != 'admin':
         return redirect(url_for('login'))
     
     user = User.query.get(user_id)
@@ -132,6 +135,57 @@ def approve_user(user_id):
         db.session.commit()
         flash(f'User {user.name} approved successfully!')
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/approve_drive/<int:drive_id>')
+def approve_drive(drive_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+    
+    drive = placementDrive.query.get(drive_id)
+    if drive:
+        drive.status = 'Approved'
+        db.session.commit()
+        flash(f'Placement drive for {drive.job_role} approved successfully!')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reject_drive/<int:drive_id>')
+def reject_drive(drive_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+    
+    drive = placementDrive.query.get(drive_id)
+    if drive:
+        drive.status = 'Rejected'
+        db.session.commit()
+        flash(f'Placement drive for {drive.job_role} rejected.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reject_user/<int:user_id>')
+def reject_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if user:
+        user.is_approved = False
+        db.session.commit()
+        flash(f'User {user.name} rejected.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/search', methods=['GET'])
+def search():
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    query = request.args.get('query')
+    if query:
+        users = User.query.filter(User.name.contains(query) | User.email.contains(query)).all()
+        drives = placementDrive.query.filter(placementDrive.job_role.contains(query)).all()
+    else:
+        users = []
+        drives = []
+
+    return render_template('admin_search.html', users=users, drives=drives)
 
 @app.route('/student/dashboard')
 @login_required
@@ -159,13 +213,35 @@ def apply_drive(drive_id):
     flash('Application submitted successfully!')
     return redirect(url_for('student_dashboard'))
 
+@app.route('/student/profile', methods=['GET', 'POST'])
+@login_required
+def student_profile():
+    if current_user.role != 'student':
+        return redirect(url_for('login'))
+    
+    profile = studentProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        profile = studentProfile(user_id=current_user.id)
+        db.session.add(profile)
+        db.session.commit()
+
+    if request.method == 'POST':
+        profile.roll_number = request.form['roll_number']
+        profile.department = request.form['department']
+        profile.year_of_study = int(request.form['year_of_study'])
+        db.session.commit()
+        flash('Profile updated successfully!')
+        return redirect(url_for('student_profile'))
+
+    return render_template('student_profile.html', profile=profile)
+
 @app.route('/company/dashboard')
 @login_required
 def company_dashboard():
     if current_user.role != 'company' or not current_user.is_approved:
         return redirect(url_for('login'))
-    drives = placementDrive.query.filter_by(company_name=current_user.name).all()
-    apps = db.session.query(Application, User).join(placementDrive).filter(placementDrive.company_id == current_user.id).all()
+    drives = placementDrive.query.filter_by(company_id=current_user.id).all()
+    apps = Application.query.join(studentProfile).filter(Application.drive_id.in_(db.session.query(placementDrive.id).filter_by(company_id=current_user.id))).all()
     return render_template('company_dash.html', drives=drives, applications=apps)
 
 @app.route('/company/create_drive', methods=['GET', 'POST'])
@@ -176,6 +252,7 @@ def create_drive():
     
     if request.method == 'POST':
         new_drive = placementDrive(
+            company_id=current_user.id,
             company_name=current_user.name,
             job_role=request.form['job_role'],
             description=request.form['description'],
@@ -189,6 +266,19 @@ def create_drive():
         return redirect(url_for('company_dashboard'))
     
     return render_template('create_drive.html')
+
+@app.route('/company/update_app_status/<int:drive_id>', methods=['GET', 'POST'])
+@login_required
+def update_app_status(app_id):
+    if current_user.role != 'company' or not current_user.is_approved:
+        return redirect(url_for('login'))
+
+    application = Application.query.get(app_id)
+    if request.method == 'POST':
+        application.status = request.form['status']
+        db.session.commit()
+        flash('Application status updated!')
+    return redirect(url_for('company_dashboard'))
 
 def init_db():  
     with app.app_context():
