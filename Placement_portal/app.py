@@ -62,7 +62,7 @@ def load_user(user_id):
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('login.html')
+    return login()
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -85,14 +85,11 @@ def register():
     
     return render_template('register_form.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+'''@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user=User.query.filter_by(email=request.form['email']).first()
         if user and check_password_hash(user.password, request.form['password']):
-            if not user.is_approved and user.is_active:
-                flash('Your account is pending approval. Please wait for admin approval.')
-                return render_template('login.html')
             login_user(user)
             session['role'] = user.role
             flash('Logged in successfully!')
@@ -102,7 +99,34 @@ def login():
                 return redirect(url_for('student_dashboard'))
             elif user.role == 'company':
                 return redirect(url_for('company_dashboard'))
+        else:
+            flash('Invalid email or password!')
+    return render_template('login.html')'''
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password, password):
+            if not user.is_approved:
+                flash('Your account is pending approval. Please wait for an admin to approve your account.')
+                return render_template('login.html')
+            
+            login_user(user)
+            flash('SUCCESS - redirecting...')  
+            if user.role == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            elif user.role == 'student':
+                return redirect(url_for('student_dashboard'))
+            elif user.role == 'company':
+                return redirect(url_for('company_dashboard'))
+        else:
+            flash('Invalid email or password!')
+        
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
@@ -246,7 +270,7 @@ def company_dashboard():
     if current_user.role != 'company' or not current_user.is_approved:
         return redirect(url_for('login'))
     drives = placementDrive.query.filter_by(company_id=current_user.id).all()
-    apps = Application.query.join(studentProfile).filter(Application.drive_id.in_(db.session.query(placementDrive.id).filter_by(company_id=current_user.id))).all()
+    apps = Application.query.join(placementDrive).filter(placementDrive.company_id == current_user.id).all()
     return render_template('company_dash.html', drives=drives, applications=apps)
 
 @app.route('/company/create_drive', methods=['GET', 'POST'])
@@ -288,7 +312,8 @@ def update_app_status(app_id):
 def init_db():  
     with app.app_context():
         db.create_all()
-        if not User.query.filter_by(email='admin@example.com').first():
+        admin_count = User.query.filter_by(email='admin@example.com').count()
+        if admin_count == 0:
             admin_user = User(
                 email='admin@example.com',
                 password=generate_password_hash('adminpassword'),
@@ -298,6 +323,7 @@ def init_db():
             )
             db.session.add(admin_user)
             db.session.commit()
+            print('Admin user created with email: admin@example.com and password: adminpassword')
 
 if __name__ == '__main__':
     init_db()
