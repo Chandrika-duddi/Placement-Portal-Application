@@ -1,10 +1,13 @@
 import hashlib
-
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, request, redirect, url_for,session,flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -13,6 +16,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+print("CWD =", os.getcwd())
+print("DB URI =", app.config['SQLALCHEMY_DATABASE_URI'])
+
+
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -191,7 +200,7 @@ def search():
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    query = request.args.get('query')
+    query = request.args.get('q')
     if query:
         users = User.query.filter(User.name.contains(query) | User.email.contains(query)).all()
         drives = placementDrive.query.filter(placementDrive.job_role.contains(query)).all()
@@ -302,12 +311,12 @@ def search_users():
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    query = request.args.get('query')
+    query = request.args.get('q')
     if query:
         users = User.query.filter(User.name.contains(query) | User.email.contains(query)).all()
     else:
         users = []
-    return render_template('admin_search_users.html', users=users)
+    return render_template('admin_search.html', users=users)
 
 @app.route('/admin/user_details/<int:user_id>')
 @login_required
