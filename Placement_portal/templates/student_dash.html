@@ -1,22 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
-</head>
-<body>
-    <h1>Student Dashboard</h1>
-    <h2>Approved Placement Drives</h2>
-    <ul>
-        {% for drive in drives %}
-            <li>
-                <strong>{{ drive.company_name }}</strong> - {{ drive.job_role }}
-                <p>{{ drive.description }}</p>
-                <p>Eligibility: {{ drive.eligibility_criteria }}</p>
-                <p>Deadline: {{ drive.application_deadline.strftime('%Y-%m-%d') }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block content %}
+<h1>Student Dashboard</h1>
+<a href="{{ url_for('student_profile') }}">Update Profile</a>
+
+<h3>Approved Drives ({{ drives|length }})</h3>
+<table border="1" style="width:100%; border-collapse: collapse;">
+    <tr><th>Company</th><th>Job Role</th><th>Deadline</th><th>Action</th></tr>
+    {% for drive in drives %}
+    <tr>
+        <td>{{ drive.company_name }}</td>
+        <td>{{ drive.job_role }}</td>
+        <td>{{ drive.application_deadline }}</td>
+        <td><a href="{{ url_for('apply_drive', drive_id=drive.id) }}">Apply</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>My Applications</h3>
+<table border="1" style="width:100%; border-collapse: collapse;">
+    <tr><th>Job Role</th><th>Company</th><th>Status</th><th>Date</th></tr>
+    {% for app in applications %}
+    <tr>
+        <td>{{ app.drive.job_role }}</td>
+        <td>{{ app.drive.company_name }}</td>
+        <td>{{ app.status }}</td>
+        <td>{{ app.applied_on }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

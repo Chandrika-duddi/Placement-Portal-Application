@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Company Dashboard</h1>
+<a href="{{ url_for('create_drive') }}">Create New Placement Drive</a>
+<h3>My Placement Drives</h3>
+<table border="1" style="width:100%; border-collapse: collapse;">
+    <tr><th>Job Role</th><th>Description</th><th>Eligibility</th><th>Deadline</th><th>Status</th><th>Actions</th></tr>
+    {% for drive in drives %}
+    <tr>
+        <td>{{ drive.job_role }}</td>
+        <td>{{ drive.description }}</td>
+        <td>{{ drive.eligibility_criteria }}</td>
+        <td>{{ drive.application_deadline }}</td>
+        <td>{{ drive.status }}</td>
+        <td><a href="{{ url_for('view_applications', drive_id=drive.id) }}">View Applications</a></td>
+    </tr>
+    {% endfor %}
+</table>
+<h3>Applications</h3>
+<table border="1" style="width:100%; border-collapse: collapse;">
+    <tr><th>Student</th><th>Job Role</th><th>Status</th><th>Applied On</th><th>Update Status</th></tr>
+    {% for app in applications %}
+    <tr>
+        <td>{{ app.student.email }}</td>
+        <td>{{ app.drive.job_role }}</td>
+        <td>{{ app.status }}</td>
+        <td>{{ app.applied_on }}</td>
+        <td>
+            <form method="post" action="{{ url_for('update_app_status', app_id=app.id) }}">
+                <select name="status">
+                    <option value="Applied" {% if app.status == 'Applied' %}selected{% endif %}>Applied</option>
+                    <option value="Shortlisted" {% if app.status == 'Shortlisted' %}selected{% endif %}>Shortlisted</option>
+                    <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+                <button type="submit">Update</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

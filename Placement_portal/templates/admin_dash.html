@@ -1,6 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Admin Dashboard</h1>
-<p>Companies: 5 | Students: 23 | Applications: 45</p>
-<!-- Add your tables/content here -->
+<div style="display: flex; flex-wrap: wrap;">
+    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px; width: 200px;">
+            <div><strong>Total Students:</strong>{{stats.students}}</div>
+            <div><strong>Companies:</strong>{{stats.companies}}</div>
+            <div><strong>Placement Drives:</strong>{{stats.drives}}</div>
+            <div><strong>Applications:</strong>{{stats.applications}}</div>
+    </div>
+    <h2>Pending User Approvals</h2>
+    {% for user in pending_users %}
+        <div style="border: 1px solid #ccc; padding: 10px; margin: 10px; width: 200px;">
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr>
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <p><strong>{{ user.email }}</strong> ({{ user.role }})</p>
+            <a href="{{ url_for('approve_user', user_id=user.id) }}" style="color: greenyellow;">Approve</a> |
+            <a href="{{ url_for('reject_user', user_id=user.id) }}" style="color: rgb(254, 78, 78);">Reject</a>
+            </tr>
+        </div>
+    {% endfor %}
+    <h2>Pending Placement Drives</h2>
+    {% for drive in pending_drives %}
+        <div style="border: 1px solid #ccc; padding: 10px; margin: 10px; width: 300px;">
+            <tr>
+                <td>{{ drive.id }}</td>
+                <td>{{ drive.company_name }}</td>
+                <td>{{ drive.job_role }}</td>
+                <p><strong>{{ drive.company_name }}</strong> - {{ drive.job_role }}</p>
+                <p>{{ drive.description }}</p>
+                <p>Eligibility: {{ drive.eligibility_criteria }}</p>
+                <p>Deadline: {{ drive.application_deadline.strftime('%Y-%m-%d') }}</p>
+            <a href="{{ url_for('approve_drive', drive_id=drive.id) }}" style="color: greenyellow;">Approve</a> |
+            <a href="{{ url_for('reject_drive', drive_id=drive.id) }}" style="color: rgb(254, 78, 78);">Reject</a>
+            </tr>
+        </div>
+    {% endfor %}
+</div>
 {% endblock %}

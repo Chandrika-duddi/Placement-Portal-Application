@@ -1,0 +1,19 @@
+{%- extends 'base.html' -%}
+{% block content %}
+<h1>Create New Placement Drive</h1>
+<form method="post">
+    <label>Job Role:</label><br>
+    <input type="text" name="job_role" required><br><br>
+    
+    <label>Description:</label><br>
+    <textarea name="description" required></textarea><br><br>
+    
+    <label>Eligibility Criteria:</label><br>
+    <textarea name="eligibility_criteria" required></textarea><br><br>
+    
+    <label>Application Deadline:</label><br>
+    <input type="date" name="application_deadline" required><br><br>
+    
+    <button type="submit">Create Drive</button>
+</form>
+{% endblock %}

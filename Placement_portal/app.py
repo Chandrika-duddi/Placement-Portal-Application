@@ -60,7 +60,7 @@ class studentProfile(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
     return render_template('login.html')
 
@@ -125,6 +125,7 @@ def admin_dashboard():
     return render_template('admin_dash.html', stats=stats, pending_users=pending_users, pending_drives=pending_drives)
 
 @app.route('/admin/approve_user/<int:user_id>')
+@login_required
 def approve_user(user_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
@@ -137,6 +138,7 @@ def approve_user(user_id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/approve_drive/<int:drive_id>')
+@login_required
 def approve_drive(drive_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
@@ -149,6 +151,7 @@ def approve_drive(drive_id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reject_drive/<int:drive_id>')
+@login_required
 def reject_drive(drive_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
@@ -161,6 +164,7 @@ def reject_drive(drive_id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reject_user/<int:user_id>')
+@login_required
 def reject_user(user_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
@@ -173,6 +177,7 @@ def reject_user(user_id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/search', methods=['GET'])
+@login_required
 def search():
     if current_user.role != 'admin':
         return redirect(url_for('login'))
@@ -267,7 +272,7 @@ def create_drive():
     
     return render_template('create_drive.html')
 
-@app.route('/company/update_app_status/<int:drive_id>', methods=['GET', 'POST'])
+@app.route('/company/update_app_status/<int:app_id>', methods=['GET', 'POST'])
 @login_required
 def update_app_status(app_id):
     if current_user.role != 'company' or not current_user.is_approved:
