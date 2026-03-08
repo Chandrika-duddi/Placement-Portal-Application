@@ -85,23 +85,6 @@ def register():
     
     return render_template('register_form.html')
 
-'''@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        user=User.query.filter_by(email=request.form['email']).first()
-        if user and check_password_hash(user.password, request.form['password']):
-            login_user(user)
-            session['role'] = user.role
-            flash('Logged in successfully!')
-            if user.role == 'admin':
-                return redirect(url_for('admin_dashboard'))
-            elif user.role == 'student':
-                return redirect(url_for('student_dashboard'))
-            elif user.role == 'company':
-                return redirect(url_for('company_dashboard'))
-        else:
-            flash('Invalid email or password!')
-    return render_template('login.html')'''
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -146,7 +129,9 @@ def admin_dashboard():
            'applications': Application.query.count()}
     pending_users = User.query.filter_by(is_approved=False, is_active=True).all()
     pending_drives = placementDrive.query.filter_by(status='Pending').all()
-    return render_template('admin_dash.html', stats=stats, pending_users=pending_users, pending_drives=pending_drives)
+    all_users = User.query.filter(User.role != 'admin').all()
+    all_drives = placementDrive.query.all()
+    return render_template('admin_dash.html', stats=stats, pending_users=pending_users, pending_drives=pending_drives, all_users=all_users, all_drives=all_drives)
 
 @app.route('/admin/approve_user/<int:user_id>')
 @login_required
@@ -215,6 +200,187 @@ def search():
         drives = []
 
     return render_template('admin_search.html', users=users, drives=drives)
+@app.route('/admin/all_users')
+@login_required
+def all_users():
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    users = User.query.filter(User.role != 'admin').all()
+    return render_template('admin_all_users.html', users=users)
+
+@app.route('/admin/all_drives')
+@login_required
+def all_drives():
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    drives = placementDrive.query.all()
+    return render_template('admin_all_drives.html', drives=drives)
+
+@app.route('/admin/blacklist_user/<int:user_id>')
+@login_required
+def blacklist_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if user:
+        user.is_approved = False
+        db.session.commit()
+        flash(f'User {user.name} blacklisted.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/unblacklist_user/<int:user_id>')
+@login_required
+def unblacklist_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if user:
+        user.is_approved = True
+        db.session.commit()
+        flash(f'User {user.name} unblacklisted.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/blacklist_drive/<int:drive_id>')
+@login_required
+def blacklist_drive(drive_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    drive = placementDrive.query.get(drive_id)
+    if drive:
+        drive.status = 'Rejected'
+        db.session.commit()
+        flash(f'Placement drive for {drive.job_role} blacklisted.')
+    return redirect(url_for('admin_dashboard')) 
+
+@app.route('/admin/unblacklist_drive/<int:drive_id>')
+@login_required
+def unblacklist_drive(drive_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    drive = placementDrive.query.get(drive_id)
+    if drive:
+        drive.status = 'Approved'
+        db.session.commit()
+        flash(f'Placement drive for {drive.job_role} unblacklisted.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_user/<int:user_id>')
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'User {user.name} deleted.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_drive/<int:drive_id>')
+@login_required 
+def delete_drive(drive_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    drive = placementDrive.query.get(drive_id)
+    if drive:
+        db.session.delete(drive)
+        db.session.commit()
+        flash(f'Placement drive for {drive.job_role} deleted.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/search_users', methods=['GET'])
+@login_required
+def search_users():
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    query = request.args.get('query')
+    if query:
+        users = User.query.filter(User.name.contains(query) | User.email.contains(query)).all()
+    else:
+        users = []
+    return render_template('admin_search_users.html', users=users)
+
+@app.route('/admin/user_details/<int:user_id>')
+@login_required
+def user_details(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found.')
+    profile=None
+    if user.role == 'student':
+        profile = studentProfile.query.filter_by(user_id=user.id).first()
+    elif user.role == 'company':
+        profile = companyProfile.query.filter_by(user_id=user.id).first()
+    html = f"""
+    <div class="detail-row"><span class="detail-label">Name:</span><span class="detail-value">{user.name}</span></div>
+    <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">{user.email}</span></div>
+    <div class="detail-row"><span class="detail-label">Role:</span><span class="detail-value">{user.role.title()}</span></div>
+    <div class="detail-row"><span class="detail-label">Status:</span>
+        <span class="detail-value">
+            {'Approved & Active' if user.is_approved and user.is_active else 
+             'Pending Approval' if not user.is_approved else 'Blacklisted'}
+        </span>
+    </div>
+    """
+    
+    if profile:
+        if user.role == 'student':
+            html += f"""
+            <div class="detail-row"><span class="detail-label">Roll No:</span><span class="detail-value">{profile.roll_number or 'N/A'}</span></div>
+            <div class="detail-row"><span class="detail-label">Department:</span><span class="detail-value">{profile.department or 'N/A'}</span></div>
+            <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">{profile.year_of_study or 'N/A'}</span></div>
+            """
+        elif user.role == 'company':
+            html += f"""
+            <div class="detail-row"><span class="detail-label">HR Contact:</span><span class="detail-value">{profile.hr or 'N/A'}</span></div>
+            <div class="detail-row"><span class="detail-label">Website:</span><span class="detail-value">{profile.website or 'N/A'}</span></div>
+            """
+    apps_count = Application.query.filter_by(student_id=user_id).count() if user.role == 'student' else 0
+    if apps_count:
+        html += f'<div class="detail-row"><span class="detail-label">Applications:</span><span class="detail-value">{apps_count}</span></div>'
+    
+    return html 
+
+@app.route('/admin/drive_details/<int:drive_id>')
+@login_required
+def drive_details(drive_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+
+    drive = placementDrive.query.get(drive_id)
+    if not drive:
+        flash('Drive not found.')
+        return redirect(url_for('admin_dashboard'))
+
+    apps_count = Application.query.filter_by(drive_id=drive_id).count()
+    company = User.query.get(drive.company_id)
+    
+    html = f"""
+    <div class="detail-row"><span class="detail-label">Company:</span><span class="detail-value">{drive.company_name}</span></div>
+    <div class="detail-row"><span class="detail-label">Job Role:</span><span class="detail-value">{drive.job_role}</span></div>
+    <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-value">{drive.status}</span></div>
+    <div class="detail-row"><span class="detail-label">Deadline:</span><span class="detail-value">{drive.application_deadline.strftime('%Y-%m-%d %H:%M')}</span></div>
+    <div class="detail-row"><span class="detail-label">Applications:</span><span class="detail-value">{apps_count}</span></div>
+    <div class="detail-row"><span class="detail-label">Description:</span><span class="detail-value">{drive.description[:200]}{'...' if len(drive.description) > 200 else ''}</span></div>
+    <div class="detail-row"><span class="detail-label">Eligibility:</span><span class="detail-value">{drive.eligibility_criteria[:200]}{'...' if len(drive.eligibility_criteria) > 200 else ''}</span></div>
+    """
+    
+    if company:
+        html += f'<div class="detail-row"><span class="detail-label">Company Email:</span><span class="detail-value">{company.email}</span></div>'
+    
+    return html
 
 @app.route('/student/dashboard')
 @login_required
