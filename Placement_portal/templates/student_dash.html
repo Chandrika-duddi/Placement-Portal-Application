@@ -11,7 +11,13 @@
         <td>{{ drive.company_name }}</td>
         <td>{{ drive.job_role }}</td>
         <td>{{ drive.application_deadline }}</td>
-        <td><a href="{{ url_for('apply_drive', drive_id=drive.id) }}">Apply</a></td>
+        <td>
+        {% if drive.id in applied_drives %}
+        Already Applied
+        {% else %}
+        <a href="{{ url_for('apply_drive', drive_id=drive.id)}}">Apply</a>
+        {% endif %}
+        </td>
     </tr>
     {% endfor %}
 </table>

@@ -1,18 +1,106 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Student Profile</h1>
-<form method="post">
-    <label>Name:</label><br>
-    <input type="text" name="name" value="{{ current_user.name }}" value="{{profile.name or ''}}"><br><br>
-    
-    <label>Roll Number (comma separated):</label><br>
-    <input type="text" name="roll_number" value="{{ current_user.roll_number }}" required><br><br>
-    
-    <label>Department:</label><br>
-    <input type="text" name="department" value="{{ current_user.department }}" required><br><br>
-    <label>Year:</label>
-    <input type="number" name="year_of_study" value="{{ profile.year_of_study or '' }}" required><br><br>
 
-    <button type="submit">Update Profile</button>
+<div class="profile-wrapper">
+
+<h1>Student Profile</h1>
+
+<form method="post">
+
+<label>Name:</label>
+<input type="text"
+name="name"
+value="{{ current_user.name }}"
+readonly>
+
+<label>Roll Number:</label>
+<input type="text"
+name="roll_number"
+value="{{ profile.roll_number or '' }}"
+required>
+
+<label>Department:</label>
+<input type="text"
+name="department"
+value="{{ profile.department or '' }}"
+required>
+
+<label>Year:</label>
+<input type="number"
+name="year_of_study"
+value="{{ profile.year_of_study or '' }}"
+required>
+
+<div class="button-row">
+
+<button type="submit" class="btn-primary">
+Update Profile
+</button>
+
+<a href="{{ url_for('student_dashboard') }}"
+class="btn-secondary">
+Back to Dashboard
+</a>
+
+</div>
+
 </form>
+
+</div>
+
+
+<style>
+
+.profile-wrapper{
+max-width:600px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:12px;
+box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+.profile-wrapper h1{
+margin-bottom:20px;
+}
+
+label{
+display:block;
+margin-top:15px;
+font-weight:600;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:6px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+.button-row{
+margin-top:25px;
+display:flex;
+gap:10px;
+}
+
+.btn-primary{
+background:#667eea;
+color:white;
+padding:10px 20px;
+border:none;
+border-radius:20px;
+cursor:pointer;
+}
+
+.btn-secondary{
+background:#999;
+color:white;
+padding:10px 20px;
+border-radius:20px;
+text-decoration:none;
+}
+
+</style>
+
 {% endblock %}

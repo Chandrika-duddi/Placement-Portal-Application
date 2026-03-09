@@ -16,26 +16,64 @@
     </tr>
     {% endfor %}
 </table>
-<h3>Applications</h3>
-<table border="1" style="width:100%; border-collapse: collapse;">
-    <tr><th>Student</th><th>Job Role</th><th>Status</th><th>Applied On</th><th>Update Status</th></tr>
-    {% for app in applications %}
-    <tr>
-        <td>{{ app.student.email }}</td>
-        <td>{{ app.drive.job_role }}</td>
-        <td>{{ app.status }}</td>
-        <td>{{ app.applied_on }}</td>
-        <td>
-            <form method="post" action="{{ url_for('update_app_status', app_id=app.id) }}">
-                <select name="status">
-                    <option value="Applied" {% if app.status == 'Applied' %}selected{% endif %}>Applied</option>
-                    <option value="Shortlisted" {% if app.status == 'Shortlisted' %}selected{% endif %}>Shortlisted</option>
-                    <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>Rejected</option>
-                </select>
-                <button type="submit">Update</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
+<h2>My Drives</h2>
+
+{% for drive in drives %}
+
+<div class="drive-card">
+
+<h3>{{ drive.job_role }}</h3>
+
+<p>{{ drive.description }}</p>
+
+<p><b>Status:</b> {{ drive.status }}</p>
+
+<h4>Applicants</h4>
+
+<table>
+
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Status</th>
+<th>Update</th>
+</tr>
+
+{% for app in drive.applications %}
+
+<tr>
+
+<td>{{ app.student.name }}</td>
+<td>{{ app.student.email }}</td>
+<td>{{ app.status }}</td>
+
+<td>
+
+<form method="post" action="{{ url_for('update_app_status', app_id=app.id) }}">
+
+<select name="status">
+
+<option>Applied</option>
+<option>Shortlisted</option>
+<option>Selected</option>
+<option>Rejected</option>
+
+</select>
+
+<button type="submit">Update</button>
+
+</form>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+{% endfor %}
 </table>
 {% endblock %}

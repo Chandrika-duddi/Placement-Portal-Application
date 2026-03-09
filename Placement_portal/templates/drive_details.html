@@ -1,0 +1,25 @@
+<h1>{{ drive.job_role }}</h1>
+
+<p><b>Company:</b> {{ drive.company_name }}</p>
+<p><b>Description:</b> {{ drive.description }}</p>
+<p><b>Eligibility:</b> {{ drive.eligibility_criteria }}</p>
+
+<h3>Students Applied</h3>
+
+<table border="1">
+
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Status</th>
+</tr>
+
+{% for app in applications %}
+<tr>
+<td>{{ app.student.name }}</td>
+<td>{{ app.student.email }}</td>
+<td>{{ app.status }}</td>
+</tr>
+{% endfor %}
+
+</table>

@@ -19,7 +19,8 @@ login_manager.login_view = 'login'
 
 print("CWD =", os.getcwd())
 print("DB URI =", app.config['SQLALCHEMY_DATABASE_URI'])
-
+app.config['SESSION_PERMANENT'] = True
+app.config['REMEMBER_COOKIE_DURATION'] = 3600
 
 
 
@@ -45,12 +46,15 @@ class placementDrive(db.Model):
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     drive_id = db.Column(db.Integer, db.ForeignKey('placementDrive.id'), nullable=False)
+
     status = db.Column(db.String(50), default='Applied')
-    applied_on = db.Column(db.DateTime, default=datetime.utcnow) 
-    student=db.relationship('User')
-    drive=db.relationship('placementDrive')   
+    applied_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('User', backref='applications')
+    drive = db.relationship('placementDrive', backref='applications')  
 
 
 class companyProfile(db.Model):
@@ -108,7 +112,7 @@ def login():
                 flash('Your account is pending approval. Please wait for an admin to approve your account.')
                 return render_template('login.html')
             
-            login_user(user)
+            login_user(user, remember=True)
             flash('SUCCESS - redirecting...')  
             if user.role == 'admin':
                 return redirect(url_for('admin_dashboard'))
@@ -193,14 +197,17 @@ def approve_drive(drive_id):
 @app.route('/admin/reject_drive/<int:drive_id>')
 @login_required
 def reject_drive(drive_id):
+
     if current_user.role != 'admin':
         return redirect(url_for('login'))
-    
+
     drive = placementDrive.query.get(drive_id)
+
     if drive:
-        drive.status = 'Rejected'
+        db.session.delete(drive)
         db.session.commit()
-        flash(f'Placement drive for {drive.job_role} rejected.')
+        flash('Drive request rejected and removed.')
+
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reject_user/<int:user_id>')
@@ -210,10 +217,12 @@ def reject_user(user_id):
         return redirect(url_for('login'))
 
     user = User.query.get(user_id)
+
     if user:
-        user.is_approved = False
+        db.session.delete(user)
         db.session.commit()
-        flash(f'User {user.name} rejected.')
+        flash(f'{user.name} rejected and removed.')
+
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/search', methods=['GET'])
@@ -254,53 +263,51 @@ def all_drives():
 @app.route('/admin/blacklist_user/<int:user_id>')
 @login_required
 def blacklist_user(user_id):
-    if current_user.role != 'admin':
-        return redirect(url_for('login'))
 
     user = User.query.get(user_id)
+
     if user:
-        user.is_approved = False
+        user.is_active = False
         db.session.commit()
-        flash(f'User {user.name} blacklisted.')
+        flash(f'{user.name} blacklisted.')
+
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/unblacklist_user/<int:user_id>')
 @login_required
 def unblacklist_user(user_id):
-    if current_user.role != 'admin':
-        return redirect(url_for('login'))
 
     user = User.query.get(user_id)
+
     if user:
-        user.is_approved = True
+        user.is_active = True
         db.session.commit()
-        flash(f'User {user.name} unblacklisted.')
+        flash(f'{user.name} unblacklisted.')
+
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/blacklist_drive/<int:drive_id>')
 @login_required
 def blacklist_drive(drive_id):
-    if current_user.role != 'admin':
-        return redirect(url_for('login'))
 
     drive = placementDrive.query.get(drive_id)
+
     if drive:
-        drive.status = 'Rejected'
+        drive.status = "Blacklisted"
         db.session.commit()
-        flash(f'Placement drive for {drive.job_role} blacklisted.')
-    return redirect(url_for('admin_dashboard')) 
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/unblacklist_drive/<int:drive_id>')
 @login_required
 def unblacklist_drive(drive_id):
-    if current_user.role != 'admin':
-        return redirect(url_for('login'))
 
     drive = placementDrive.query.get(drive_id)
+
     if drive:
-        drive.status = 'Approved'
+        drive.status = "Approved"
         db.session.commit()
-        flash(f'Placement drive for {drive.job_role} unblacklisted.')
+
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_user/<int:user_id>')
@@ -400,6 +407,20 @@ def user_details(user_id):
     
     return html 
 
+@app.route('/admin/drive/<int:drive_id>')
+@login_required
+def drive_view(drive_id):
+
+    drive = placementDrive.query.get(drive_id)
+
+    applications = Application.query.filter_by(drive_id=drive_id).all()
+
+    return render_template(
+        "drive_details.html",
+        drive=drive,
+        applications=applications
+    )
+
 @app.route('/admin/drive_details/<int:drive_id>')
 @login_required
 def drive_details(drive_id):
@@ -458,24 +479,30 @@ def apply_drive(drive_id):
 @app.route('/student/profile', methods=['GET', 'POST'])
 @login_required
 def student_profile():
+
     if current_user.role != 'student':
         return redirect(url_for('login'))
-    
+
     profile = studentProfile.query.filter_by(user_id=current_user.id).first()
+
     if not profile:
         profile = studentProfile(user_id=current_user.id)
         db.session.add(profile)
         db.session.commit()
 
     if request.method == 'POST':
+
         profile.roll_number = request.form['roll_number']
         profile.department = request.form['department']
-        profile.year_of_study = int(request.form['year_of_study'])
+        profile.year_of_study = request.form['year_of_study']
+
         db.session.commit()
-        flash('Profile updated successfully!')
+
+        flash("Profile updated successfully!")
+
         return redirect(url_for('student_profile'))
 
-    return render_template('student_profile.html', profile=profile)
+    return render_template("student_profile.html", profile=profile)
 
 @app.route('/company/dashboard')
 @login_required
@@ -508,6 +535,8 @@ def create_drive():
         return redirect(url_for('company_dashboard'))
     
     return render_template('create_drive.html')
+
+
 
 @app.route('/company/update_app_status/<int:app_id>', methods=['GET', 'POST'])
 @login_required
