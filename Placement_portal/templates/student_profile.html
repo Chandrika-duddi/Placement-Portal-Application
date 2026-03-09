@@ -11,7 +11,7 @@
     <label>Department:</label><br>
     <input type="text" name="department" value="{{ current_user.department }}" required><br><br>
     <label>Year:</label>
-    <input type="number" name="year" value="{{ current_user.year }}" required><br><br>
+    <input type="number" name="year_of_study" value="{{ profile.year_of_study or '' }}" required><br><br>
 
     <button type="submit">Update Profile</button>
 </form>

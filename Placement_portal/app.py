@@ -48,7 +48,9 @@ class Application(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     drive_id = db.Column(db.Integer, db.ForeignKey('placementDrive.id'), nullable=False)
     status = db.Column(db.String(50), default='Applied')
-    applied_on = db.Column(db.DateTime, default=datetime.utcnow)    
+    applied_on = db.Column(db.DateTime, default=datetime.utcnow) 
+    student=db.relationship('User')
+    drive=db.relationship('placementDrive')   
 
 
 class companyProfile(db.Model):
@@ -122,7 +124,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.clear()
+    logout_user()
     flash('Logged out successfully!')
     return redirect(url_for('login'))
 
@@ -236,7 +238,9 @@ def all_users():
         return redirect(url_for('login'))
 
     users = User.query.filter(User.role != 'admin').all()
-    return render_template('admin_all_users.html', users=users)
+    student_profiles={p.user_id: p for p in studentProfile.query.all()}
+    company_profiles={p.user_id: p for p in companyProfile.query.all()}
+    return render_template('admin_all_users.html', users=users, student_profiles=student_profiles, company_profiles=company_profiles)
 
 @app.route('/admin/all_drives')
 @login_required
@@ -332,11 +336,25 @@ def search_users():
         return redirect(url_for('login'))
 
     query = request.args.get('q')
+
     if query:
-        users = User.query.filter(User.name.contains(query) | User.email.contains(query)).all()
+        users = User.query.filter(
+            User.name.contains(query) | User.email.contains(query)
+        ).all()
     else:
         users = []
-    return render_template('admin_search.html', users=users)
+
+    stats = {
+        'students': User.query.filter_by(role='student').count(),
+        'companies': User.query.filter_by(role='company').count(),
+        'drives': placementDrive.query.count(),
+        'applications': Application.query.count()
+    }
+
+    return render_template(
+        'admin_search.html',
+        users=users,
+    )
 
 @app.route('/admin/user_details/<int:user_id>')
 @login_required
