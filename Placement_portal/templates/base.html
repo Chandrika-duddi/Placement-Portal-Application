@@ -264,22 +264,19 @@
 </head>
 <body>
     <nav>
-        {% if current_user.is_authenticated and current_user.role == 'admin' %}
-        <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a> |
-        {% endif %}
-
-        {% if current_user.is_authenticated and current_user.role == 'student' %}
-        <a href="{{ url_for('student_dashboard') }}">Student Dashboard</a> |
-        {% endif %}
-
-        {% if current_user.is_authenticated and current_user.role == 'company' %}
-        <a href="{{ url_for('company_dashboard') }}">Company Dashboard</a> |
+    {% if current_user.is_authenticated %}
+        {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a> |
+        {% elif current_user.role == 'student' %}
+            <a href="{{ url_for('student_dashboard') }}">Student Dashboard</a> |
+        {% elif current_user.role == 'company' %}
+            <a href="{{ url_for('company_dashboard') }}">Company Dashboard</a> |
         {% endif %}
         <a href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
+    {% else %}
         <a href="{{ url_for('login') }}">Login</a> |
         <a href="{{ url_for('register') }}">Register</a>
-        {% endif %}
+    {% endif %}
     </nav>
     <div style="margin-top: 20px;">
         {% with messages = get_flashed_messages() %}
