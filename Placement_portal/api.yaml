@@ -1,0 +1,24 @@
+openapi: 3.0.0
+info:
+  title: Placement Portal API
+  version: 1.0
+
+paths:
+  /login:
+    post:
+      summary: Authenticate user
+  /register:
+    post:
+      summary: Register student or company
+  /student/dashboard:
+    get:
+      summary: Fetch available placement drives
+  /apply/{drive_id}:
+    get:
+      summary: Apply for a placement drive
+  /company/create_drive:
+    post:
+      summary: Create a placement drive
+  /company/update_app_status/{app_id}:
+    post:
+      summary: Update application status
