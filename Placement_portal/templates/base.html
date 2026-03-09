@@ -264,20 +264,21 @@
 </head>
 <body>
     <nav>
-        {% if session.get('role') == 'admin' %}
-            <a href="http://127.0.0.1:5000/admin/dashboard">Admin Dashboard</a> |
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a> |
         {% endif %}
-        {% if session.get('role') == 'student' %}
-            <a href="http://127.0.0.1:5000/student/dashboard">Student Dashboard</a> |
+
+        {% if current_user.is_authenticated and current_user.role == 'student' %}
+        <a href="{{ url_for('student_dashboard') }}">Student Dashboard</a> |
         {% endif %}
-        {% if session.get('role') == 'company' %}
-            <a href="http://127.0.0.1:5000/company/dashboard">Company Dashboard</a> |
+
+        {% if current_user.is_authenticated and current_user.role == 'company' %}
+        <a href="{{ url_for('company_dashboard') }}">Company Dashboard</a> |
         {% endif %}
-        {% if session.get('role') %}
-           <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
-            <a href="http://127.0.0.1:5000/login">Login</a> |
-            <a href="http://127.0.0.1:5000/register">Register</a>
+        <a href="{{ url_for('login') }}">Login</a> |
+        <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
     </nav>
     <div style="margin-top: 20px;">

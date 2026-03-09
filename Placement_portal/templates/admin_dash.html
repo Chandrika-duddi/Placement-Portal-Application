@@ -27,102 +27,78 @@ Search
 </div>
 </form>
 </div>
-
 </div>
-
-
-<!-- Dashboard grid -->
 <div class="dashboard-grid">
-
-
-<!-- Pending approvals -->
 <div class="card large-card">
-
 <div class="card-header">
 Pending Approvals
 </div>
-
 <div class="card-body scrollable">
-
 {% if pending_users %}
-
 {% for user in pending_users %}
-
 <div class="list-item">
-
 <strong>{{ user.name }}</strong>
 <br>
 <small>{{ user.email }}</small>
-
 <div style="margin-top:6px">
-
 <a href="{{ url_for('approve_user', user_id=user.id) }}"
 class="btn success">Approve</a>
-
 <a href="{{ url_for('reject_user', user_id=user.id) }}"
 class="btn danger">Reject</a>
-
+</div>
+</div>
+{% endfor %}
+{% else %}
+<p style="color:green">No pending approvals</p>
+{% endif %}
+</div>
 </div>
 
-</div>
 
+<h4>Pending Drives</h4>
+{% for drive in pending_drives %}
+<div class="list-item">
+<strong>{{ drive.job_role }}</strong>
+<br>
+Company: {{ drive.company_name }}
+<div>
+<a href="{{ url_for('approve_drive', drive_id=drive.id) }}">Approve</a>
+<a href="{{ url_for('reject_drive', drive_id=drive.id) }}">Reject</a>
+</div>
+</div>
 {% endfor %}
 
-{% else %}
-
-<p style="color:green">No pending approvals</p>
-
-{% endif %}
-
-</div>
-</div>
-
-
-<!-- System overview -->
 <div class="card">
-
 <div class="card-header">
 System Overview
 </div>
-
 <div class="card-body stats-grid">
-
 <div class="stat-box">
 <h4>Students</h4>
 <p>{{ stats.students }}</p>
 </div>
-
 <div class="stat-box">
 <h4>Companies</h4>
 <p>{{ stats.companies }}</p>
 </div>
-
 <div class="stat-box">
 <h4>Drives</h4>
 <p>{{ stats.drives }}</p>
 </div>
-
 <div class="stat-box">
 <h4>Applications</h4>
 <p>{{ stats.applications }}</p>
 </div>
-
 </div>
 </div>
 
 
-
-<!-- Student Profiles -->
 <div class="card">
-
 <div class="card-header">
 Student Profiles
 </div>
-
 <div class="card-body scrollable">
-
 <table class="table">
-
 <tr>
 <th>Name</th>
 <th>Department</th>
@@ -130,65 +106,40 @@ Student Profiles
 <th>Applications</th>
 <th>Actions</th>
 </tr>
-
 {% for user in all_users if user.role == 'student' %}
-
 {% set profile = student_profiles.get(user.id) %}
-
 <tr>
-
 <td>{{ user.name }}</td>
-
 <td>
 {{ profile.department if profile else "N/A" }}
 </td>
-
 <td>
 {{ profile.year_of_study if profile else "N/A" }}
 </td>
-
 <td>
 {{ applications_count.get(user.id,0) }}
 </td>
-
 <td>
-
 {% if user.is_active %}
-
 <a href="{{ url_for('blacklist_user', user_id=user.id) }}"
 class="btn danger">Blacklist</a>
-
 {% else %}
-
 <a href="{{ url_for('unblacklist_user', user_id=user.id) }}"
 class="btn success">Unblacklist</a>
-
 {% endif %}
-
 </td>
-
 </tr>
-
 {% endfor %}
-
 </table>
-
 </div>
 </div>
 
-
-
-<!-- Companies -->
 <div class="card">
-
 <div class="card-header">
 Registered Companies
 </div>
-
 <div class="card-body scrollable">
-
 <table class="table">
-
 <tr>
 <th>Company</th>
 <th>Email</th>
@@ -196,127 +147,71 @@ Registered Companies
 <th>Website</th>
 <th>Actions</th>
 </tr>
-
 {% for user in all_users if user.role == 'company' %}
-
 {% set profile = company_profiles.get(user.id) %}
-
 <tr>
-
 <td>{{ user.name }}</td>
-
 <td>{{ user.email }}</td>
-
 <td>{{ profile.hr if profile else "N/A" }}</td>
-
 <td>{{ profile.website if profile else "N/A" }}</td>
-
 <td>
-
 {% if user.is_active %}
-
 <a href="{{ url_for('blacklist_user', user_id=user.id) }}"
 class="btn danger">Blacklist</a>
-
 {% else %}
-
 <a href="{{ url_for('unblacklist_user', user_id=user.id) }}"
 class="btn success">Unblacklist</a>
-
 {% endif %}
-
 </td>
-
 </tr>
-
 {% endfor %}
-
 </table>
-
 </div>
 </div>
 
-
-
-<!-- Placement Drives -->
 <div class="card">
-
 <div class="card-header">
 Placement Drives
 </div>
-
 <div class="card-body scrollable">
-
 {% for drive in all_drives %}
-
 <div class="drive-item">
-
 <strong>{{ drive.job_role }}</strong>
 <br>
-
 Company: {{ drive.company_name }}
 <br>
-
 Status: {{ drive.status }}
 <br>
-
 Deadline: {{ drive.application_deadline }}
-
 <div style="margin-top:6px">
-
 {% if drive.status == 'Approved' %}
-
 <a href="{{ url_for('blacklist_drive', drive_id=drive.id) }}"
 class="btn danger">Blacklist Drive</a>
-
 {% elif drive.status == 'Blacklisted' %}
-
 <a href="{{ url_for('unblacklist_drive', drive_id=drive.id) }}"
 class="btn success">Unblacklist Drive</a>
-
 {% endif %}
-
 </div>
-
 <br>
-
 <b>Applicants ({{ drive.applications|length }})</b>
-
 <div class="applicants">
-
 {% for app in drive.applications %}
-
 <div class="applicant">
-
 {{ app.student.name }}
 ({{ app.student.email }})
 — {{ app.status }}
-
 </div>
-
 {% else %}
-
 <div>No applicants</div>
-
 {% endfor %}
-
 </div>
-
 </div>
-
 {% endfor %}
-
 </div>
 </div>
-
-
 </div>
 </div>
-
-
-
 <style>
-
 .dashboard-wrapper{
 max-width:1400px;
 margin:auto;

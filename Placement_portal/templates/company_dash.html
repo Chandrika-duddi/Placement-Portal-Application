@@ -1,79 +1,51 @@
 {% extends 'base.html' %}
 {% block content %}
+
 <h1>Company Dashboard</h1>
-<a href="{{ url_for('create_drive') }}">Create New Placement Drive</a>
-<h3>My Placement Drives</h3>
-<table border="1" style="width:100%; border-collapse: collapse;">
-    <tr><th>Job Role</th><th>Description</th><th>Eligibility</th><th>Deadline</th><th>Status</th><th>Actions</th></tr>
-    {% for drive in drives %}
-    <tr>
-        <td>{{ drive.job_role }}</td>
-        <td>{{ drive.description }}</td>
-        <td>{{ drive.eligibility_criteria }}</td>
-        <td>{{ drive.application_deadline }}</td>
-        <td>{{ drive.status }}</td>
-        <td><a href="{{ url_for('view_applications', drive_id=drive.id) }}">View Applications</a></td>
-    </tr>
-    {% endfor %}
-</table>
-<h2>My Drives</h2>
-
-{% for drive in drives %}
-
-<div class="drive-card">
-
-<h3>{{ drive.job_role }}</h3>
-
-<p>{{ drive.description }}</p>
-
-<p><b>Status:</b> {{ drive.status }}</p>
-
-<h4>Applicants</h4>
-
+<a href="{{ url_for('create_drive') }}" class="btn">Create Placement Drive</a>
+<h2>Upcoming Drives</h2>
 <table>
-
 <tr>
-<th>Name</th>
-<th>Email</th>
+<th>Drive</th>
 <th>Status</th>
-<th>Update</th>
+<th>Actions</th>
 </tr>
-
-{% for app in drive.applications %}
-
+{% for drive in upcoming_drives %}
 <tr>
-
-<td>{{ app.student.name }}</td>
-<td>{{ app.student.email }}</td>
-<td>{{ app.status }}</td>
-
+<td>{{ drive.job_role }}</td>
+<td>{{ drive.status }}</td>
 <td>
+<a href="{{ url_for('view_drive', drive_id=drive.id) }}">
+View Applicants
+</a>
 
-<form method="post" action="{{ url_for('update_app_status', app_id=app.id) }}">
-
-<select name="status">
-
-<option>Applied</option>
-<option>Shortlisted</option>
-<option>Selected</option>
-<option>Rejected</option>
-
-</select>
-
-<button type="submit">Update</button>
-
-</form>
-
+|
+<a href="{{ url_for('complete_drive', drive_id=drive.id) }}">
+Mark Complete
+</a>
 </td>
-
 </tr>
-
 {% endfor %}
-
 </table>
 
-</div>
 
+<h2>Closed Drives</h2>
+<table>
+<tr>
+<th>Drive</th>
+<th>Status</th>
+<th>Applicants</th>
+</tr>
+{% for drive in closed_drives %}
+<tr>
+<td>{{ drive.job_role }}</td>
+<td>{{ drive.status }}</td>
+<td>
+<a href="{{ url_for('view_drive', drive_id=drive.id) }}">
+View Applicants
+</a>
+</td>
+</tr>
 {% endfor %}
 </table>
 {% endblock %}

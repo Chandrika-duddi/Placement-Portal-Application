@@ -2,24 +2,35 @@
 {% block content %}
 <h1>Student Dashboard</h1>
 <a href="{{ url_for('student_profile') }}">Update Profile</a>
-
 <h3>Approved Drives ({{ drives|length }})</h3>
 <table border="1" style="width:100%; border-collapse: collapse;">
-    <tr><th>Company</th><th>Job Role</th><th>Deadline</th><th>Action</th></tr>
-    {% for drive in drives %}
-    <tr>
-        <td>{{ drive.company_name }}</td>
-        <td>{{ drive.job_role }}</td>
-        <td>{{ drive.application_deadline }}</td>
-        <td>
-        {% if drive.id in applied_drives %}
-        Already Applied
-        {% else %}
-        <a href="{{ url_for('apply_drive', drive_id=drive.id)}}">Apply</a>
-        {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
+<tr>
+<th>Company</th>
+<th>Role</th>
+<th>Deadline</th>
+<th>Details</th>
+<th>Apply</th>
+</tr>
+{% for drive in drives %}
+<tr>
+<td>{{ drive.company_name }}</td>
+<td>{{ drive.job_role }}</td>
+<td>{{ drive.application_deadline }}</td>
+<td>
+<a href="{{ url_for('view_drive_details', drive_id=drive.id) }}">
+View Details
+</a>
+</td>
+<td>
+{% set applied_ids = applications | map(attribute='drive_id') | list %}
+{% if drive.id in applied_ids %}
+Already Applied
+{% else %}
+<a href="{{ url_for('apply_drive', drive_id=drive.id) }}">Apply</a>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
 </table>
 
 <h3>My Applications</h3>

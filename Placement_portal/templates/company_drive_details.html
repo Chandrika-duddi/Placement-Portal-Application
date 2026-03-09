@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ drive.job_role }}</h1>
+<p><b>Company:</b> {{ drive.company_name }}</p>
+<p><b>Description:</b> {{ drive.description }}</p>
+<p><b>Eligibility:</b> {{ drive.eligibility_criteria }}</p>
+<h2>Applicants</h2>
+<table>
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Roll</th>
+<th>Department</th>
+<th>Year</th>
+<th>Status</th>
+<th>Update</th>
+</tr>
+{% for app in applications %}
+{% set profile = app.student.id %}
+<tr>
+<td>{{ app.student.name }}</td>
+<td>{{ app.student.email }}</td>
+<td>{{ app.student_profile.roll_number if app.student_profile else "N/A" }}</td>
+<td>{{ app.student_profile.department if app.student_profile else "N/A" }}</td>
+<td>{{ app.student_profile.year_of_study if app.student_profile else "N/A" }}</td>
+<td>{{ app.status }}</td>
+<td>
+<form method="post"
+action="{{ url_for('update_app_status', app_id=app.id) }}">
+<select name="status">
+<option {% if app.status=='Applied' %}selected{% endif %}>Applied</option>
+<option {% if app.status=='Shortlisted' %}selected{% endif %}>Shortlisted</option>
+<option {% if app.status=='Selected' %}selected{% endif %}>Selected</option>
+<option {% if app.status=='Rejected' %}selected{% endif %}>Rejected</option>
+</select>
+<button type="submit">Update</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</table>
+<a href="{{ url_for('company_dashboard') }}">Back</a>
+{% endblock %}

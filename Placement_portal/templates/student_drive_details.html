@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ drive.job_role }}</h1>
+<div style="background:white;padding:20px;border-radius:10px">
+<p><b>Company:</b> {{ drive.company_name }}</p>
+<p><b>Application Deadline:</b> {{ drive.application_deadline }}</p>
+<h3>Job Description</h3>
+<p>{{ drive.description }}</p>
+<h3>Eligibility Criteria</h3>
+<p>{{ drive.eligibility_criteria }}</p>
+<br>
+<a href="{{ url_for('apply_drive', drive_id=drive.id) }}"
+style="background:#667eea;color:white;padding:10px 20px;border-radius:8px;text-decoration:none">
+Apply Now
+</a>
+<a href="{{ url_for('student_dashboard') }}"
+style="margin-left:10px">
+Back
+</a>
+</div>
+{% endblock %}

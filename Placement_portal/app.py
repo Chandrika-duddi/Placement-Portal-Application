@@ -459,6 +459,21 @@ def student_dashboard():
     my_applications = Application.query.filter_by(student_id=current_user.id).all()
     return render_template('student_dash.html', drives=approved_drives, applications=my_applications)
 
+@app.route('/student/drive/<int:drive_id>')
+@login_required
+def view_drive_details(drive_id):
+
+    if current_user.role != 'student':
+        return redirect(url_for('login'))
+
+    drive = placementDrive.query.get(drive_id)
+
+    if not drive or drive.status != "Approved":
+        flash("Drive not available")
+        return redirect(url_for('student_dashboard'))
+
+    return render_template("student_drive_details.html", drive=drive)
+
 @app.route('/student/apply/<int:drive_id>')
 @login_required
 def apply_drive(drive_id):
@@ -507,11 +522,25 @@ def student_profile():
 @app.route('/company/dashboard')
 @login_required
 def company_dashboard():
-    if current_user.role != 'company' or not current_user.is_approved:
+
+    if current_user.role != 'company':
         return redirect(url_for('login'))
-    drives = placementDrive.query.filter_by(company_id=current_user.id).all()
-    apps = Application.query.join(placementDrive).filter(placementDrive.company_id == current_user.id).all()
-    return render_template('company_dash.html', drives=drives, applications=apps)
+
+    upcoming_drives = placementDrive.query.filter_by(
+        company_id=current_user.id,
+        status="Approved"
+    ).all()
+
+    closed_drives = placementDrive.query.filter_by(
+        company_id=current_user.id,
+        status="Closed"
+    ).all()
+
+    return render_template(
+        "company_dash.html",
+        upcoming_drives=upcoming_drives,
+        closed_drives=closed_drives
+    )
 
 @app.route('/company/create_drive', methods=['GET', 'POST'])
 @login_required
@@ -536,7 +565,38 @@ def create_drive():
     
     return render_template('create_drive.html')
 
+@app.route('/company/drive/<int:drive_id>')
+@login_required
+def view_drive(drive_id):
 
+    if current_user.role != 'company':
+        return redirect(url_for('login'))
+
+    drive = placementDrive.query.get(drive_id)
+    if not drive or drive.company_id != current_user.id:
+        flash("Unauthorized access")
+        return redirect(url_for('company_dashboard'))
+
+    applications = Application.query.filter_by(drive_id=drive_id).all()
+
+    return render_template(
+        "company_drive_details.html",
+        drive=drive,
+        applications=applications
+    )
+
+@app.route('/company/complete_drive/<int:drive_id>')
+@login_required
+def complete_drive(drive_id):
+
+    drive = placementDrive.query.get(drive_id)
+
+    if drive and drive.company_id == current_user.id:
+
+        drive.status = "Closed"
+        db.session.commit()
+
+    return redirect(url_for('company_dashboard'))
 
 @app.route('/company/update_app_status/<int:app_id>', methods=['GET', 'POST'])
 @login_required
@@ -545,6 +605,9 @@ def update_app_status(app_id):
         return redirect(url_for('login'))
 
     application = Application.query.get(app_id)
+    if not application or application.drive.company_id != current_user.id:
+        flash("Unauthorized action")
+        return redirect(url_for('company_dashboard'))
     if request.method == 'POST':
         application.status = request.form['status']
         db.session.commit()
@@ -568,5 +631,6 @@ def init_db():
             print('Admin user created with email: admin@example.com and password: adminpassword')
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True) 
+    with app.app_context():
+        init_db()
+    app.run(debug=True)

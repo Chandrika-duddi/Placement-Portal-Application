@@ -28,8 +28,11 @@
 
 {% for user in users %}
 <tr>
+
 <td>{{ user.name }}</td>
+
 <td>{{ user.email }}</td>
+
 <td>{{ user.role }}</td>
 
 <td>
@@ -43,6 +46,10 @@ Blacklisted
 </td>
 
 <td>
+
+<a href="{{ url_for('user_details', user_id=user.id) }}">
+View Profile
+</a>
 
 {% if not user.is_approved %}
 <a href="{{ url_for('approve_user', user_id=user.id) }}">Approve</a>
@@ -58,7 +65,6 @@ Blacklisted
 
 </tr>
 {% endfor %}
-
 </table>
 
 {% else %}
