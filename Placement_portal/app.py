@@ -132,15 +132,35 @@ def admin_dashboard():
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    stats={'students': User.query.filter_by(role='student').count(),
-           'companies': User.query.filter_by(role='company').count(),
-           'drives': placementDrive.query.count(),
-           'applications': Application.query.count()}
+    stats = {
+        'students': User.query.filter_by(role='student').count(),
+        'companies': User.query.filter_by(role='company').count(),
+        'drives': placementDrive.query.count(),
+        'applications': Application.query.count()
+    }
+
     pending_users = User.query.filter_by(is_approved=False, is_active=True).all()
     pending_drives = placementDrive.query.filter_by(status='Pending').all()
     all_users = User.query.filter(User.role != 'admin').all()
     all_drives = placementDrive.query.all()
-    return render_template('admin_dash.html', stats=stats, pending_users=pending_users, pending_drives=pending_drives, all_users=all_users, all_drives=all_drives)
+    applications_count = {
+    u.id: Application.query.filter_by(student_id=u.id).count()
+    for u in all_users
+    }
+    student_profiles = {p.user_id: p for p in studentProfile.query.all()}
+    company_profiles = {p.user_id: p for p in companyProfile.query.all()}
+
+    return render_template(
+        'admin_dash.html',
+        stats=stats,
+        pending_users=pending_users,
+        pending_drives=pending_drives,
+        all_users=all_users,
+        all_drives=all_drives,
+        student_profiles=student_profiles,
+        company_profiles=company_profiles,
+        applications_count=applications_count
+    )
 
 @app.route('/admin/approve_user/<int:user_id>')
 @login_required
